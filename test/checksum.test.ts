@@ -75,6 +75,18 @@ const validCases: ValidCase[] = [
     kind: "upcA",
     digits: "036000291452",
   },
+  {
+    name: "13-digit code outside the 978/979 prefix is ean13, not isbn13",
+    input: "4006381333931",
+    kind: "ean13",
+    digits: "4006381333931",
+  },
+  {
+    name: "979 prefix is also isbn13",
+    input: "9790863571236",
+    kind: "isbn13",
+    digits: "9790863571236",
+  },
 ];
 
 for (const c of validCases) {
@@ -126,6 +138,7 @@ const checkDigitCases: CheckDigitCase[] = [
   { kind: "isbn10", body: "080442957", expected: "X" },
   { kind: "isbn10", body: "000000000", expected: "0" },
   { kind: "isbn13", body: "978030640615", expected: "7" },
+  { kind: "ean13", body: "400638133393", expected: "1" },
   { kind: "upcA", body: "03600029145", expected: "2" },
 ];
 
@@ -138,6 +151,7 @@ for (const c of checkDigitCases) {
 test("computeCheckDigit rejects a body of the wrong length", () => {
   assert.throws(() => computeCheckDigit("isbn10", "12345"));
   assert.throws(() => computeCheckDigit("isbn13", "12345"));
+  assert.throws(() => computeCheckDigit("ean13", "12345"));
   assert.throws(() => computeCheckDigit("upcA", "12345"));
 });
 
@@ -154,6 +168,7 @@ const prettyCases: PrettyCase[] = [
   { input: "9780306406157", expected: "9 780306 406157" },
   { input: "036000291452", expected: "0 36000 29145 2" },
   { input: "080442957X", expected: "080442957-X" },
+  { input: "4006381333931", expected: "4 006381 333931" },
 ];
 
 for (const c of prettyCases) {

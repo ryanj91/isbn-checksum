@@ -11,7 +11,9 @@ export function prettyPrint(result: ParsedCode): string {
   const { kind, digits } = result;
   switch (kind) {
     case "isbn13":
+    case "ean13":
       // GS1 groups EAN-13 as 1-6-6 under the bars: "9 780306 406157".
+      // Same grouping whether or not the code is actually a book.
       return `${digits.slice(0, 1)} ${digits.slice(1, 7)} ${digits.slice(7, 13)}`;
     case "upcA":
       // UPC-A groups as 1-5-5-1: number system, two data blocks, check digit.

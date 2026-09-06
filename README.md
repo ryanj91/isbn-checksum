@@ -1,7 +1,7 @@
 # isbn-checksum
 
-A parser and pretty printer for the checksum digit on ISBN-10, ISBN-13, and
-UPC-A codes.
+A parser and pretty printer for the checksum digit on ISBN-10, ISBN-13,
+plain EAN-13, and UPC-A codes.
 
 These three formats each protect themselves with a single check digit
 computed from the digits before it, using three different (but related)
@@ -42,11 +42,11 @@ computeCheckDigit("isbn13", "978030640615"); // => "7"
 
 `parse` accepts hyphens and spaces anywhere and strips them before checking,
 and treats a lowercase `x` the same as `X` for ISBN-10. It infers which
-format you gave it purely from the digit count after stripping punctuation
-(10 / 12 / 13), so a 13-digit EAN-13 barcode that isn't actually a book
-still parses fine and is labeled `"isbn13"` — the checksum can't tell an
-ISBN-13 apart from a generic EAN-13 without also checking the `978`/`979`
-prefix.
+format you gave it from the digit count after stripping punctuation (10 / 12
+/ 13). For 13-digit codes it also checks the leading `978`/`979` prefix the
+ISBN agency assigns under: a checksum-valid 13-digit code with that prefix
+is labeled `"isbn13"`, and one without it (a barcode for something that
+isn't a book) is labeled `"ean13"` — same math, different kind.
 
 ## Pretty printing
 
