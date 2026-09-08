@@ -105,6 +105,39 @@ export function parse(input: string): ParseOutcome {
   }
 }
 
+/**
+ * Converts a valid ISBN-10 to its ISBN-13 equivalent: drop the ISBN-10
+ * check digit, prefix "978", and recompute the check digit under EAN-13
+ * math. Every ISBN-10 has exactly one ISBN-13 form.
+ */
+export function isbn10ToIsbn13(input: string): ParseOutcome {
+  const parsed = parse(input);
+  if (!parsed.ok) return parsed;
+  if (parsed.kind !== "isbn10") {
+    return { ok: false, reason: `expected an ISBN-10, got ${parsed.kind} in "${input}"` };
+  }
+  const body12 = "978" + parsed.digits.slice(0, 9);
+  return { ok: true, kind: "isbn13", digits: body12 + ean13CheckDigit(body12) };
+}
+
+/**
+ * Converts a valid ISBN-13 back to ISBN-10. Only codes under the 978 prefix
+ * have an ISBN-10 form - 979 exists specifically because the 978 space was
+ * running out, so a 979 code (or a non-ISBN EAN-13) has no ISBN-10 form.
+ */
+export function isbn13ToIsbn10(input: string): ParseOutcome {
+  const parsed = parse(input);
+  if (!parsed.ok) return parsed;
+  if (parsed.kind !== "isbn13") {
+    return { ok: false, reason: `expected an ISBN-13, got ${parsed.kind} in "${input}"` };
+  }
+  if (!parsed.digits.startsWith("978")) {
+    return { ok: false, reason: `ISBN-13 "${input}" has no ISBN-10 equivalent (not a 978 code)` };
+  }
+  const body9 = parsed.digits.slice(3, 12);
+  return { ok: true, kind: "isbn10", digits: body9 + isbn10CheckDigit(body9) };
+}
+
 /** Computes the check digit for a body of the right length (9 / 11 / 12 digits, no check digit attached). */
 export function computeCheckDigit(kind: Kind, body: string): string {
   switch (kind) {

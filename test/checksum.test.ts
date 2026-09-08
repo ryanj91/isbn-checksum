@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parse, computeCheckDigit, normalize, type Kind } from "../src/checksum.js";
+import {
+  parse,
+  computeCheckDigit,
+  normalize,
+  isbn10ToIsbn13,
+  isbn13ToIsbn10,
+  type Kind,
+} from "../src/checksum.js";
 import { prettyPrint } from "../src/format.js";
 
 interface ValidCase {
@@ -157,6 +164,49 @@ test("computeCheckDigit rejects a body of the wrong length", () => {
 
 test("normalize strips hyphens and spaces and upcases X", () => {
   assert.equal(normalize(" 080442957x "), "080442957X");
+});
+
+test("isbn10ToIsbn13 converts a plain isbn10", () => {
+  const result = isbn10ToIsbn13("0-306-40615-2");
+  assert.deepEqual(result, { ok: true, kind: "isbn13", digits: "9780306406157" });
+});
+
+test("isbn10ToIsbn13 converts an isbn10 with an X check digit", () => {
+  const result = isbn10ToIsbn13("080442957X");
+  assert.deepEqual(result, { ok: true, kind: "isbn13", digits: "9780804429573" });
+});
+
+test("isbn10ToIsbn13 rejects a bad isbn10", () => {
+  const result = isbn10ToIsbn13("0306406151");
+  assert.equal(result.ok, false);
+});
+
+test("isbn10ToIsbn13 rejects input that isn't isbn10-shaped", () => {
+  const result = isbn10ToIsbn13("036000291452");
+  assert.equal(result.ok, false);
+});
+
+test("isbn13ToIsbn10 converts a 978 isbn13 back", () => {
+  const result = isbn13ToIsbn10("978-0-306-40615-7");
+  assert.deepEqual(result, { ok: true, kind: "isbn10", digits: "0306406152" });
+});
+
+test("isbn13ToIsbn10 round-trips through isbn10ToIsbn13", () => {
+  const isbn13 = isbn10ToIsbn13("080442957X");
+  assert.equal(isbn13.ok, true);
+  if (isbn13.ok) {
+    assert.deepEqual(isbn13ToIsbn10(isbn13.digits), { ok: true, kind: "isbn10", digits: "080442957X" });
+  }
+});
+
+test("isbn13ToIsbn10 rejects a 979 isbn13", () => {
+  const result = isbn13ToIsbn10("9790863571236");
+  assert.equal(result.ok, false);
+});
+
+test("isbn13ToIsbn10 rejects a non-isbn ean13", () => {
+  const result = isbn13ToIsbn10("4006381333931");
+  assert.equal(result.ok, false);
 });
 
 interface PrettyCase {

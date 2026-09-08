@@ -38,7 +38,20 @@ if (parsed.ok) {
 
 // Compute a check digit yourself, e.g. while assembling a new code:
 computeCheckDigit("isbn13", "978030640615"); // => "7"
+
+// Convert between the two ISBN forms:
+isbn10ToIsbn13("0-306-40615-2");
+// => { ok: true, kind: "isbn13", digits: "9780306406157" }
+
+isbn13ToIsbn10("978-0-306-40615-7");
+// => { ok: true, kind: "isbn10", digits: "0306406152" }
 ```
+
+`isbn10ToIsbn13` and `isbn13ToIsbn10` both validate their input first (via `parse`)
+and fail the same way `parse` does if it's not checksum-valid. A 979 ISBN-13
+has no ISBN-10 form — 979 exists because the 978 space ran out — so
+`isbn13ToIsbn10` rejects those, along with any 13-digit code that isn't an
+ISBN-13 at all.
 
 `parse` accepts hyphens and spaces anywhere and strips them before checking,
 and treats a lowercase `x` the same as `X` for ISBN-10. It infers which
