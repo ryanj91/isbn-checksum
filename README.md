@@ -74,13 +74,30 @@ registration-group range table, which isn't in this repo yet. For now,
 `prettyPrint` on an ISBN-10 code only sets its check digit apart
 (`"080442957-X"`); see the roadmap.
 
+## Command line
+
+`src/cli.ts` compiles to a small wrapper around `parse` and `prettyPrint`.
+Give it one or more codes; each gets a line of `kind<TAB>pretty form` on
+stdout, or an error on stderr. The exit status is nonzero if any code failed
+to parse.
+
+```
+$ node dist/cli.js "978-0-306-40615-7" "0306406151"
+isbn13	9 780306 406157
+bad ISBN-10 check digit in "0306406151"
+$ echo $?
+1
+```
+
 ## Layout
 
 - `src/checksum.ts` — normalization, validation, and check-digit
   computation for all three formats.
 - `src/format.ts` — pretty printing.
+- `src/cli.ts` — command-line wrapper around `parse`/`prettyPrint`.
 - `test/checksum.test.ts` — table-driven tests, run with `node --test`
   against the compiled output.
+- `test/cli.test.ts` — tests for the CLI's exit code and output.
 
 ## Development
 

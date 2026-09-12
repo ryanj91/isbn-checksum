@@ -5,6 +5,9 @@
   "description": "Validating parser and pretty printer for ISBN-10, ISBN-13/EAN-13, and UPC-A checksums",
   "type": "module",
   "main": "dist/checksum.js",
+  "bin": {
+    "isbn-checksum": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "test": "node --test dist/test"
