@@ -18,6 +18,9 @@ export function prettyPrint(result: ParsedCode): string {
     case "upcA":
       // UPC-A groups as 1-5-5-1: number system, two data blocks, check digit.
       return `${digits.slice(0, 1)} ${digits.slice(1, 6)} ${digits.slice(6, 11)} ${digits.slice(11, 12)}`;
+    case "ean8":
+      // EAN-8 groups as 4-4 under the bars: "4017 0725".
+      return `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
     case "isbn10":
       // No registration-group table available yet, so only the check digit
       // (the one part that's always unambiguous) gets set apart.

@@ -1,14 +1,16 @@
 /**
  * Checksum math for the barcode families that show up on books and retail
  * packaging: ISBN-10, ISBN-13, plain EAN-13 (identical math to ISBN-13, but
- * outside the 978/979 prefix the ISBN agency assigns under), and UPC-A.
+ * outside the 978/979 prefix the ISBN agency assigns under), UPC-A, and
+ * EAN-8 (the short form GS1 assigns when a package is too small for a full
+ * EAN-13, e.g. cans and cosmetics).
  *
  * The parser only checks arithmetic, not real-world assignment. A string
  * that passes `parse` is checksum-valid, not necessarily a book or product
  * that actually exists.
  */
 
-export type Kind = "isbn10" | "isbn13" | "ean13" | "upcA";
+export type Kind = "isbn10" | "isbn13" | "ean13" | "upcA" | "ean8";
 
 export interface ParsedCode {
   ok: true;
@@ -72,16 +74,40 @@ function upcAValid(code: string): boolean {
   return ean13Valid("0" + code);
 }
 
+// EAN-8 uses the same alternating-weight idea as EAN-13, just with weights
+// 3/1 instead of 1/3 (GS1 defines it starting from the check digit end, so
+// the leftmost of the 7 body digits gets weight 3, not 1).
+function ean8CheckDigit(body7: string): string {
+  let sum = 0;
+  for (let i = 0; i < 7; i++) {
+    const weight = i % 2 === 0 ? 3 : 1;
+    sum += weight * Number(body7[i]);
+  }
+  return String((10 - (sum % 10)) % 10);
+}
+
+function ean8Valid(code: string): boolean {
+  if (!/^\d{8}$/.test(code)) return false;
+  return ean8CheckDigit(code.slice(0, 7)) === code[7];
+}
+
 /**
  * Parses and validates a barcode string, inferring the kind from its length
- * after normalization: 10 digits -> ISBN-10, 12 -> UPC-A, 13 -> ISBN-13 or
- * EAN-13. A 13-digit code is only labeled "isbn13" if it also starts with
- * the 978 or 979 prefix the ISBN agency assigns under; otherwise it's a
- * checksum-valid EAN-13 that isn't a book, labeled "ean13".
+ * after normalization: 8 digits -> EAN-8, 10 -> ISBN-10, 12 -> UPC-A, 13 ->
+ * ISBN-13 or EAN-13. A 13-digit code is only labeled "isbn13" if it also
+ * starts with the 978 or 979 prefix the ISBN agency assigns under;
+ * otherwise it's a checksum-valid EAN-13 that isn't a book, labeled
+ * "ean13". EAN-8 is never a book — it's a separate GS1 allocation for
+ * packages too small for a full EAN-13 — so it's always labeled "ean8".
  */
 export function parse(input: string): ParseOutcome {
   const digits = normalize(input);
   switch (digits.length) {
+    case 8:
+      if (!ean8Valid(digits)) {
+        return { ok: false, reason: `bad EAN-8 check digit in "${input}"` };
+      }
+      return { ok: true, kind: "ean8", digits };
     case 10:
       if (!isbn10Valid(digits)) {
         return { ok: false, reason: `bad ISBN-10 check digit in "${input}"` };
@@ -100,7 +126,7 @@ export function parse(input: string): ParseOutcome {
     default:
       return {
         ok: false,
-        reason: `expected 10, 12, or 13 digits after stripping punctuation, got ${digits.length} in "${input}"`,
+        reason: `expected 8, 10, 12, or 13 digits after stripping punctuation, got ${digits.length} in "${input}"`,
       };
   }
 }
@@ -138,7 +164,7 @@ export function isbn13ToIsbn10(input: string): ParseOutcome {
   return { ok: true, kind: "isbn10", digits: body9 + isbn10CheckDigit(body9) };
 }
 
-/** Computes the check digit for a body of the right length (9 / 11 / 12 digits, no check digit attached). */
+/** Computes the check digit for a body of the right length (7 / 9 / 11 / 12 digits, no check digit attached). */
 export function computeCheckDigit(kind: Kind, body: string): string {
   switch (kind) {
     case "isbn10":
@@ -151,5 +177,8 @@ export function computeCheckDigit(kind: Kind, body: string): string {
     case "upcA":
       if (!/^\d{11}$/.test(body)) throw new Error("upcA body must be exactly 11 digits");
       return upcACheckDigit(body);
+    case "ean8":
+      if (!/^\d{7}$/.test(body)) throw new Error("ean8 body must be exactly 7 digits");
+      return ean8CheckDigit(body);
   }
 }

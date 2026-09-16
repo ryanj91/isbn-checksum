@@ -1,10 +1,10 @@
 # isbn-checksum
 
 A parser and pretty printer for the checksum digit on ISBN-10, ISBN-13,
-plain EAN-13, and UPC-A codes.
+plain EAN-13, UPC-A, and EAN-8 codes.
 
-These three formats each protect themselves with a single check digit
-computed from the digits before it, using three different (but related)
+These formats each protect themselves with a single check digit computed
+from the digits before it, using a handful of different (but related)
 weighted-sum formulas:
 
 - **ISBN-10**: weights 10 down to 1, mod 11. The check digit can come out to
@@ -14,6 +14,13 @@ weighted-sum formulas:
 - **UPC-A**: same alternating-weight idea as EAN-13. In fact a UPC-A code is
   checksum-identical to an EAN-13 code with a `0` glued on the front, so
   that's how this library computes it internally.
+- **EAN-8**: the same alternating-weight idea as EAN-13, but starting from
+  weight 3 instead of 1 (GS1 defines the weights counting from the check
+  digit outward, and EAN-8 has an even number of digits where EAN-13 has an
+  odd number, so the parity comes out flipped). GS1 assigns EAN-8 codes
+  separately from EAN-13/UPC-A for packages too small to print a full
+  barcode, so a valid EAN-8 is never an ISBN — this library always labels
+  it `"ean8"`.
 
 A string with a valid check digit is *checksum-valid*, not necessarily a
 real, assigned book or product number. All-zeros passes the math. This
@@ -55,18 +62,18 @@ ISBN-13 at all.
 
 `parse` accepts hyphens and spaces anywhere and strips them before checking,
 and treats a lowercase `x` the same as `X` for ISBN-10. It infers which
-format you gave it from the digit count after stripping punctuation (10 / 12
-/ 13). For 13-digit codes it also checks the leading `978`/`979` prefix the
-ISBN agency assigns under: a checksum-valid 13-digit code with that prefix
-is labeled `"isbn13"`, and one without it (a barcode for something that
-isn't a book) is labeled `"ean13"` — same math, different kind.
+format you gave it from the digit count after stripping punctuation (8 / 10
+/ 12 / 13). For 13-digit codes it also checks the leading `978`/`979` prefix
+the ISBN agency assigns under: a checksum-valid 13-digit code with that
+prefix is labeled `"isbn13"`, and one without it (a barcode for something
+that isn't a book) is labeled `"ean13"` — same math, different kind.
 
 ## Pretty printing
 
 `prettyPrint` currently reproduces the "human readable interpretation" text
-that GS1 prints directly under an EAN-13 or UPC-A barcode (grouped 1-6-6 and
-1-5-5-1 respectively), because that grouping is fixed by the standard and
-doesn't need any outside data.
+that GS1 prints directly under an EAN-13, UPC-A, or EAN-8 barcode (grouped
+1-6-6, 1-5-5-1, and 4-4 respectively), because that grouping is fixed by the
+standard and doesn't need any outside data.
 
 The hyphenation printed on the back of an actual book (registration group /
 publisher / title) is a different thing — it depends on the official ISBN

@@ -94,6 +94,18 @@ const validCases: ValidCase[] = [
     kind: "isbn13",
     digits: "9790863571236",
   },
+  {
+    name: "ean8 plain",
+    input: "40170725",
+    kind: "ean8",
+    digits: "40170725",
+  },
+  {
+    name: "ean8 with hyphens",
+    input: "4017-0725",
+    kind: "ean8",
+    digits: "40170725",
+  },
 ];
 
 for (const c of validCases) {
@@ -117,6 +129,8 @@ const invalidCases: InvalidCase[] = [
   { name: "isbn10 with X in the wrong slot", input: "0X06406152" },
   { name: "isbn13 wrong check digit", input: "9780306406158" },
   { name: "upcA wrong check digit", input: "036000291451" },
+  { name: "ean8 wrong check digit", input: "40170726" },
+  { name: "seven digits, one short of ean8", input: "4017072" },
   { name: "nine digits, one short of isbn10", input: "030640615" },
   { name: "eleven digits, between isbn10 and upcA", input: "03064061523" },
   { name: "fourteen digits, one past isbn13", input: "97803064061570" },
@@ -147,6 +161,7 @@ const checkDigitCases: CheckDigitCase[] = [
   { kind: "isbn13", body: "978030640615", expected: "7" },
   { kind: "ean13", body: "400638133393", expected: "1" },
   { kind: "upcA", body: "03600029145", expected: "2" },
+  { kind: "ean8", body: "4017072", expected: "5" },
 ];
 
 for (const c of checkDigitCases) {
@@ -160,6 +175,7 @@ test("computeCheckDigit rejects a body of the wrong length", () => {
   assert.throws(() => computeCheckDigit("isbn13", "12345"));
   assert.throws(() => computeCheckDigit("ean13", "12345"));
   assert.throws(() => computeCheckDigit("upcA", "12345"));
+  assert.throws(() => computeCheckDigit("ean8", "12345"));
 });
 
 test("normalize strips hyphens and spaces and upcases X", () => {
@@ -219,6 +235,7 @@ const prettyCases: PrettyCase[] = [
   { input: "036000291452", expected: "0 36000 29145 2" },
   { input: "080442957X", expected: "080442957-X" },
   { input: "4006381333931", expected: "4 006381 333931" },
+  { input: "40170725", expected: "4017 0725" },
 ];
 
 for (const c of prettyCases) {
